@@ -41,7 +41,7 @@ func formatAAAA(name, rec string) (dns.RR, error) {
 			Rrtype: dns.TypeAAAA,
 			Class:  dns.ClassINET,
 			Ttl:    0},
-		AAAA: net.ParseIP(rec),
+		AAAA: net.ParseIP(rec).To16(),
 	}, nil
 }
 
