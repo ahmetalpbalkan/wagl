@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	dnsLabel  = "dns.service"
+	dnsLabel = "dns.service"
 	dnsDomain = "dns.domain"
 )
 
@@ -120,7 +120,7 @@ func (s *Swarm) Tasks() (task.ClusterState, error) {
 // listContainers returns list of running containers from Docker API
 func (s *Swarm) listContainers() ([]container, error) {
 	url := strings.TrimSuffix(s.url.String(), "/")
-	req, err := http.NewRequest("GET", url+"/containers/json?all=false", nil)
+	req, err := http.NewRequest("GET", url + "/containers/json?all=false", nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating the HTTP request: %v", err)
 	}
@@ -185,7 +185,8 @@ func dnsPartsFromLabels(labels map[string]string) (string, string) {
 		service = strings.ToLower(labels[dnsLabel])
 		project = strings.ToLower(labels[dnsDomain])
 	)
-	if service == "" { // does not make sense to have a project name w/o service
+	if service == "" {
+		// does not make sense to have a project name w/o service
 		project = ""
 	}
 	return service, project
@@ -197,7 +198,14 @@ func mappedPorts(l []containerPort) ([]task.Port, error) {
 	out := make([]task.Port, 0)
 	for _, v := range l {
 		if isMappedPort(v) {
+
 			p, err := toPort(v)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, p)
+
+			p, err = toIpv6Port(v)
 			if err != nil {
 				return nil, err
 			}
@@ -218,6 +226,21 @@ func toPort(p containerPort) (task.Port, error) {
 	if ip == nil {
 		return task.Port{}, fmt.Errorf("cannot parse IP '%s'", p.IP)
 	}
+	fmt.Println(ip)
+	return task.Port{
+		HostIP:   ip,
+		HostPort: p.PublicPort,
+		Proto:    p.Type,
+	}, nil
+}
+
+func toIpv6Port(p containerPort) (task.Port, error) {
+	ip := net.ParseIP(p.IP)
+	ip = ip.To16()
+	if ip == nil {
+		return task.Port{}, fmt.Errorf("cannot parse IP '%s'", p.IP)
+	}
+	fmt.Println(ip)
 	return task.Port{
 		HostIP:   ip,
 		HostPort: p.PublicPort,
