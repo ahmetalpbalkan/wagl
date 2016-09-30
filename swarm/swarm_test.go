@@ -63,17 +63,24 @@ func TestGetTasks(t *testing.T) {
 			Id:      "nginx",
 			Service: "api",
 			Domain:  "billing",
-			Ports: []task.Port{{
-				HostIP:   net.IPv4(192, 168, 99, 103),
-				HostPort: 8000,
-				Proto:    "tcp",
-			}},
+			Ports: []task.Port{
+				{
+					HostIP:   net.IPv4(192, 168, 99, 103),
+					HostPort: 8000,
+					Proto:    "tcp",
+				},
+				{
+					HostIP:   net.IP{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 0xc0, 0xa8, 0x63, 0x67},
+					HostPort: 8000,
+					Proto:    "tcp",
+				},
+			},
 		},
 		{
-			Id:      "no-ports-but-has-labels",
-			Service: "db",
-			Domain:  "billing",
-			Ports:   []task.Port{},
+			Id:"no-ports-but-has-labels",
+			Ports:[]task.Port{},
+			Service:"db",
+			Domain:"billing",
 		},
 	})
 	if !reflect.DeepEqual(out, expected) {
@@ -127,11 +134,18 @@ func Test_mappedPorts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(o, []task.Port{{
-		HostIP:   net.IPv4(192, 168, 99, 103),
-		HostPort: 8000,
-		Proto:    "tcp",
-	}}) {
+	if !reflect.DeepEqual(o, []task.Port{
+		{
+			HostIP:   net.IPv4(192, 168, 99, 103),
+			HostPort: 8000,
+			Proto:    "tcp",
+		},
+		{
+			HostIP:   net.IP{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 0xc0, 0xa8, 0x63, 0x67},
+			HostPort: 8000,
+			Proto:    "tcp",
+		},
+	}) {
 		t.Fatal("got wrong mappings: %#v", o)
 	}
 }

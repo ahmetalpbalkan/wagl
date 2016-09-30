@@ -226,7 +226,6 @@ func toPort(p containerPort) (task.Port, error) {
 	if ip == nil {
 		return task.Port{}, fmt.Errorf("cannot parse IP '%s'", p.IP)
 	}
-	fmt.Println(ip)
 	return task.Port{
 		HostIP:   ip,
 		HostPort: p.PublicPort,
@@ -240,7 +239,6 @@ func toIpv6Port(p containerPort) (task.Port, error) {
 	if ip == nil {
 		return task.Port{}, fmt.Errorf("cannot parse IP '%s'", p.IP)
 	}
-	fmt.Println(ip)
 	return task.Port{
 		HostIP:   ip,
 		HostPort: p.PublicPort,
