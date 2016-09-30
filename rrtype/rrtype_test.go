@@ -14,6 +14,7 @@ func TestIsSupported(t *testing.T) {
 		// supported
 		{dns.TypeA, true},
 		{dns.TypeSRV, true},
+		{dns.TypeAAAA, true},
 
 		// some others
 		{dns.TypeCNAME, false},

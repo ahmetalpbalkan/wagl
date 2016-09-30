@@ -15,11 +15,14 @@ func Test_insertRR(t *testing.T) {
 	rr := make(rrstore.RRs)
 	insertRR(rr, rrEntry{dns.TypeA, "foo.domain.", "10.0.0.1"})
 	insertRR(rr, rrEntry{dns.TypeA, "foo.domain.", "10.0.0.2"})
+	insertRR(rr, rrEntry{dns.TypeAAAA, "foo.domain.", "2001:db8:85a3::8a2e:370:7334"})
 	insertRR(rr, rrEntry{dns.TypeSRV, "_foo._tcp.domain.", "10.0.0.3:3000"})
 
 	expected := rrstore.RRs(map[uint16]map[string][]string{
 		dns.TypeA:   {"foo.domain.": []string{"10.0.0.1", "10.0.0.2"}},
-		dns.TypeSRV: {"_foo._tcp.domain.": []string{"10.0.0.3:3000"}}})
+		dns.TypeAAAA: {"foo.domain.": []string{"2001:db8:85a3::8a2e:370:7334"}},
+		dns.TypeSRV: {"_foo._tcp.domain.": []string{"10.0.0.3:3000"}},
+	})
 
 	if !reflect.DeepEqual(expected, rr) {
 		t.Fatalf("wrong value.\nexpected=%#v\ngot=%#v", expected, rr)
@@ -44,6 +47,19 @@ func Test_getTaskRRs(t *testing.T) {
 			[]string{
 				"A foo.domain. 10.0.0.1",
 				"SRV _foo._tcp.domain. 10.0.0.1:8000",
+			}},
+
+		{task.Task{
+			Service: "foo",
+			Ports: []task.Port{
+				{
+					HostIP:   net.ParseIP("2001:db8:85a3::8a2e:370:7334"),
+					HostPort: 8000,
+					Proto:    "tcp",
+				},
+			}},
+			[]string{
+				"AAAA foo.domain. 2001:db8:85a3::8a2e:370:7334",
 			}},
 
 		// Task with project domain and multiple ports
@@ -115,10 +131,14 @@ func Test_RRs_actualWorkload(t *testing.T) {
 			Domain:  "infra",
 			Ports:   []task.Port{{net.IPv4(192, 168, 0, 3), 53, "udp"}},
 		},
+
 		{
 			Id:      "web1",
 			Service: "api",
-			Ports:   []task.Port{{net.IPv4(192, 168, 0, 1), 8000, "tcp"}},
+			Ports:   []task.Port{
+				{net.IPv4(192, 168, 0, 1), 8000, "tcp"},
+				{net.ParseIP("2001:db8:85a3::8a2e:370:7334"), 8000, "tcp"},
+			},
 		},
 		{
 			Id:      "web2",
@@ -152,6 +172,9 @@ func Test_RRs_actualWorkload(t *testing.T) {
 			"dns.infra.domain.":     []string{"192.168.0.3"},
 			"api.domain.":           []string{"192.168.0.1", "192.168.0.2"},
 			"frontend.blog.domain.": []string{"192.168.0.3"},
+		},
+		dns.TypeAAAA: {
+			"api.domain.":           []string{"2001:db8:85a3::8a2e:370:7334"},
 		},
 		dns.TypeSRV: {
 			"_dns._udp.infra.domain.":     []string{"192.168.0.3:53"},

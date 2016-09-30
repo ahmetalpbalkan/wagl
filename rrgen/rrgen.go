@@ -51,7 +51,7 @@ func getRRs(domain string, ll []task.Task) rrstore.RRs {
 
 // getTaskRRs returns all DNS RRs of a Task as a list
 func getTaskRRs(domain string, t task.Task) []rrEntry {
-	l := make([]rrEntry, 0)
+	result := make([]rrEntry, 0)
 
 	// Prepend task domain to DNS domain
 	tail := dns.Fqdn(domain)
@@ -60,15 +60,31 @@ func getTaskRRs(domain string, t task.Task) []rrEntry {
 	}
 
 	// A record ("A service.domain. IP")
-	ip := t.Ports[0].HostIP.String() // use first port mapping's IP addr
-	l = append(l, rrEntry{dns.TypeA, fmt.Sprintf("%s.%s", t.Service, tail), ip})
+	for _, p := range t.Ports {
+		ip := p.HostIP.String() // use first port mapping's IP addr
+		found := false;
+		for _, tmp := range result {
+			if tmp.record == ip {
+				found = true
+			}
+		}
+		if found == false {
+			if p.HostIP.To4() == nil {
+				result = append(result, rrEntry{dns.TypeAAAA, fmt.Sprintf("%s.%s", t.Service, tail), ip})
+			} else {
+				result = append(result, rrEntry{dns.TypeA, fmt.Sprintf("%s.%s", t.Service, tail), ip})
+			}
+		}
+	}
 
 	// SRV records for each port mapping ("SRV _service._tcp.domain. IP PORT")
 	for _, p := range t.Ports {
 		val := fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
-		l = append(l, rrEntry{dns.TypeSRV, fmt.Sprintf("_%s._%s.%s", t.Service, p.Proto, tail), val})
+		if p.HostIP.To4() != nil {
+			result = append(result, rrEntry{dns.TypeSRV, fmt.Sprintf("_%s._%s.%s", t.Service, p.Proto, tail), val})
+		}
 	}
-	return l
+	return result
 }
 
 // insertRR adds the specified RR entry into the RR table.
