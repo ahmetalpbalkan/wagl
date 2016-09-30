@@ -13,6 +13,7 @@ type formatterFunc func(name, rr string) (dns.RR, error)
 var rrFormatters = map[uint16]formatterFunc{
 	dns.TypeA:   formatA,
 	dns.TypeSRV: formatSRV,
+	dns.TypeAAAA: formatAAAA,
 }
 
 // IsSupported returns if the system supports answering to questions
@@ -30,6 +31,18 @@ func ToRR(rrType uint16, name, rec string) (dns.RR, error) {
 		return nil, fmt.Errorf("Formatting RR to %s(%d) REC not implemented", dns.TypeToString[rrType], rrType)
 	}
 	return f(name, rec)
+}
+
+// formatA formats an IP address record for a into A record.
+func formatAAAA(name, rec string) (dns.RR, error) {
+	return &dns.AAAA{
+		Hdr: dns.RR_Header{
+			Name:   name,
+			Rrtype: dns.TypeAAAA,
+			Class:  dns.ClassINET,
+			Ttl:    0},
+		AAAA: net.ParseIP(rec),
+	}, nil
 }
 
 // formatA formats an IP address record for a into A record.

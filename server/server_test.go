@@ -69,6 +69,10 @@ func TestHandleExternalOn(t *testing.T) {
 func TestHandleDomain(t *testing.T) {
 	rr := rrstore.New()
 	rr.Set(map[uint16]map[string][]string{
+		dns.TypeAAAA: {
+			"api.domain.":  []string{"10.0.0.1", "10.0.0.2"},
+			"blog.domain.": []string{"10.0.1.1", "10.0.1.2", "10.0.1.3"},
+		},
 		dns.TypeA: {
 			"api.domain.":  []string{"10.0.0.1", "10.0.0.2"},
 			"blog.domain.": []string{"10.0.1.1", "10.0.1.2", "10.0.1.3"},
@@ -95,7 +99,10 @@ func TestHandleDomain(t *testing.T) {
 		// domain.
 		{"nonexistent.domain.", dns.TypeA, dns.RcodeNameError, 0},
 		{"nonexistent.domain.", dns.TypeSRV, dns.RcodeNameError, 0},
+		{"nonexistent.domain.", dns.TypeAAAA, dns.RcodeNameError, 0},
+
 		{"api.domain", dns.TypeA, dns.RcodeSuccess, 2},
+		{"api.domain", dns.TypeAAAA, dns.RcodeSuccess, 2},
 		{"_web._tcp.domain", dns.TypeSRV, dns.RcodeSuccess, 1},
 		{"_WEB._UDP.domain", dns.TypeSRV, dns.RcodeSuccess, 3},
 	}
