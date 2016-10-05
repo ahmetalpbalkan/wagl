@@ -24,7 +24,11 @@ func TestIsSupported(t *testing.T) {
 	for _, c := range cases {
 		out := IsSupported(c.rrType)
 		if out != c.supported {
-			t.Fatal("wrong value for %s", dns.TypeToString[c.rrType])
+			t.Fatal("wrong value for", dns.TypeToString[c.rrType])
 		}
 	}
+}
+
+func TestToRR(t *testing.T) {
+	ToRR(dns.TypeAAAA, "api.domain", "2001:cdba::3257:9652")
 }

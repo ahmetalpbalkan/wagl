@@ -33,7 +33,7 @@ func ToRR(rrType uint16, name, rec string) (dns.RR, error) {
 	return f(name, rec)
 }
 
-// formatA formats an IP address record for a into A record.
+// formatAAAA formats an IP address record for a into A record.
 func formatAAAA(name, rec string) (dns.RR, error) {
 	return &dns.AAAA{
 		Hdr: dns.RR_Header{
