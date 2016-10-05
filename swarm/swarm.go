@@ -198,14 +198,7 @@ func mappedPorts(l []containerPort) ([]task.Port, error) {
 	out := make([]task.Port, 0)
 	for _, v := range l {
 		if isMappedPort(v) {
-
 			p, err := toPort(v)
-			if err != nil {
-				return nil, err
-			}
-			out = append(out, p)
-
-			p, err = toIpv6Port(v)
 			if err != nil {
 				return nil, err
 			}

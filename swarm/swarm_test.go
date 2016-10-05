@@ -69,11 +69,6 @@ func TestGetTasks(t *testing.T) {
 					HostPort: 8000,
 					Proto:    "tcp",
 				},
-				{
-					HostIP:   net.IP{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 0xc0, 0xa8, 0x63, 0x67},
-					HostPort: 8000,
-					Proto:    "tcp",
-				},
 			},
 		},
 		{
@@ -137,11 +132,6 @@ func Test_mappedPorts(t *testing.T) {
 	if !reflect.DeepEqual(o, []task.Port{
 		{
 			HostIP:   net.IPv4(192, 168, 99, 103),
-			HostPort: 8000,
-			Proto:    "tcp",
-		},
-		{
-			HostIP:   net.IP{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 0xc0, 0xa8, 0x63, 0x67},
 			HostPort: 8000,
 			Proto:    "tcp",
 		},
