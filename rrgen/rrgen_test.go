@@ -9,6 +9,7 @@ import (
 	"github.com/ahmetalpbalkan/wagl/rrstore"
 	"github.com/ahmetalpbalkan/wagl/task"
 	"github.com/miekg/dns"
+	"encoding/json"
 )
 
 func Test_insertRR(t *testing.T) {
@@ -45,21 +46,9 @@ func Test_getTaskRRs(t *testing.T) {
 				},
 			}},
 			[]string{
+				"AAAA foo.domain. 10.0.0.1",
 				"A foo.domain. 10.0.0.1",
 				"SRV _foo._tcp.domain. 10.0.0.1:8000",
-			}},
-
-		{task.Task{
-			Service: "foo",
-			Ports: []task.Port{
-				{
-					HostIP:   net.ParseIP("2001:db8:85a3::8a2e:370:7334"),
-					HostPort: 8000,
-					Proto:    "tcp",
-				},
-			}},
-			[]string{
-				"AAAA foo.domain. 2001:db8:85a3::8a2e:370:7334",
 			}},
 
 		// Task with project domain and multiple ports
@@ -79,6 +68,7 @@ func Test_getTaskRRs(t *testing.T) {
 				},
 			}},
 			[]string{
+				"AAAA api.billing.domain. 10.0.0.2",
 				"A api.billing.domain. 10.0.0.2",
 				"SRV _api._tcp.billing.domain. 10.0.0.2:8001",
 				"SRV _api._udp.billing.domain. 10.0.0.2:8002",
@@ -174,16 +164,21 @@ func Test_RRs_actualWorkload(t *testing.T) {
 			"frontend.blog.domain.": []string{"192.168.0.3"},
 		},
 		dns.TypeAAAA: {
-			"api.domain.":           []string{"2001:db8:85a3::8a2e:370:7334"},
+			"dns.infra.domain.":     []string{"192.168.0.3"},
+			"api.domain.":           []string{"192.168.0.1", "192.168.0.2"},
+			"frontend.blog.domain.": []string{"192.168.0.3"},
 		},
 		dns.TypeSRV: {
 			"_dns._udp.infra.domain.":     []string{"192.168.0.3:53"},
-			"_api._tcp.domain.":           []string{"192.168.0.1:8000", "192.168.0.2:8000"},
+			"_api._tcp.domain.":           []string{"192.168.0.1:8000", "2001:db8:85a3::8a2e:370:7334:8000", "192.168.0.2:8000"},
 			"_api._udp.domain.":           []string{"192.168.0.2:5000"},
 			"_frontend._tcp.blog.domain.": []string{"192.168.0.3:8000"},
-		}})
+		},
+	})
 
 	if !reflect.DeepEqual(rr, expected) {
-		t.Fatalf("wrong value.\nexp: %#v\ngot: %#v", expected, rr)
+		e, _ := json.Marshal(expected)
+		g, _ := json.Marshal(rr)
+		t.Fatalf("wrong value.\nexp: %s\ngot: %s", string(e), string(g))
 	}
 }

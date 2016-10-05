@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/miekg/dns"
 	"github.com/ahmetalpbalkan/wagl/rrstore"
 	"github.com/ahmetalpbalkan/wagl/task"
-	"github.com/miekg/dns"
 )
 
 type rrEntry struct {
@@ -51,7 +51,7 @@ func getRRs(domain string, ll []task.Task) rrstore.RRs {
 
 // getTaskRRs returns all DNS RRs of a Task as a list
 func getTaskRRs(domain string, t task.Task) []rrEntry {
-	result := make([]rrEntry, 0)
+	l := make([]rrEntry, 0)
 
 	// Prepend task domain to DNS domain
 	tail := dns.Fqdn(domain)
@@ -59,32 +59,21 @@ func getTaskRRs(domain string, t task.Task) []rrEntry {
 		tail = dns.Fqdn(t.Domain) + tail
 	}
 
+	ipV4 := t.Ports[0].HostIP.To4().String()
+	ipV6 := t.Ports[0].HostIP.To16().String()
+
+	// AAAA record ("AAAA service.domain. IP")
+	l = append(l, rrEntry{dns.TypeAAAA, fmt.Sprintf("%s.%s", t.Service, tail), ipV6})
+
 	// A record ("A service.domain. IP")
-	for _, p := range t.Ports {
-		ip := p.HostIP.String() // use first port mapping's IP addr
-		found := false;
-		for _, tmp := range result {
-			if tmp.record == ip {
-				found = true
-			}
-		}
-		if found == false {
-			if p.HostIP.To4() == nil {
-				result = append(result, rrEntry{dns.TypeAAAA, fmt.Sprintf("%s.%s", t.Service, tail), ip})
-			} else {
-				result = append(result, rrEntry{dns.TypeA, fmt.Sprintf("%s.%s", t.Service, tail), ip})
-			}
-		}
-	}
+	l = append(l, rrEntry{dns.TypeA, fmt.Sprintf("%s.%s", t.Service, tail), ipV4})
 
 	// SRV records for each port mapping ("SRV _service._tcp.domain. IP PORT")
 	for _, p := range t.Ports {
 		val := fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
-		if p.HostIP.To4() != nil {
-			result = append(result, rrEntry{dns.TypeSRV, fmt.Sprintf("_%s._%s.%s", t.Service, p.Proto, tail), val})
-		}
+		l = append(l, rrEntry{dns.TypeSRV, fmt.Sprintf("_%s._%s.%s", t.Service, p.Proto, tail), val})
 	}
-	return result
+	return l
 }
 
 // insertRR adds the specified RR entry into the RR table.
